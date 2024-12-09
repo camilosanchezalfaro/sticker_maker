@@ -42,6 +42,12 @@
             font-size: 16px;
         }
 
+        #image {
+            max-width: 100%;
+            display: none;
+            margin-bottom: 20px;
+        }
+
         canvas {
             max-width: 100%;
             border: 2px solid #ddd;
@@ -74,14 +80,6 @@
             font-size: 14px;
             color: #888;
         }
-
-        .cropper-container {
-            margin-bottom: 20px;
-        }
-
-        #remove-bg {
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
@@ -89,7 +87,7 @@
     <div class="container">
         <input type="file" id="image-upload" accept="image/*">
         <div class="cropper-container">
-            <img id="image" style="max-width: 100%; display: none;" />
+            <img id="image" />
         </div>
         <button id="remove-bg" disabled>Eliminar Fondo</button>
         <canvas id="canvas"></canvas>
@@ -98,61 +96,59 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script>
+        let cropper;
+        const removeBgButton = document.getElementById("remove-bg");
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
-        const removeBgButton = document.getElementById("remove-bg");
-        let cropper;
-        let img = new Image();
+        const imgElement = document.getElementById("image");
 
-        // Cargar imagen redimensionada y aplicar Cropper.js
+        // Cargar la imagen seleccionada
         document.getElementById("image-upload").addEventListener("change", function(event) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                img.onload = function() {
-                    // Mostrar la imagen para recortarla
-                    const imageElement = document.getElementById("image");
-                    imageElement.src = e.target.result;
-                    imageElement.style.display = 'block';
+                imgElement.src = e.target.result;
+                imgElement.style.display = 'block';
 
-                    // Iniciar Cropper.js
+                imgElement.onload = function() {
+                    // Inicializar el cropper una vez que la imagen esté cargada
                     if (cropper) {
-                        cropper.destroy(); // Destruir el cropper anterior si existiera
+                        cropper.destroy();
                     }
 
-                    cropper = new Cropper(imageElement, {
-                        aspectRatio: 1, // Aspecto cuadrado
+                    cropper = new Cropper(imgElement, {
+                        aspectRatio: 1, // Relación de aspecto 1:1 (cuadrado)
                         viewMode: 1,
                         autoCropArea: 1,
                         responsive: true,
-                        minCropBoxWidth: 500, // Asegurar que el recorte sea de 500x500
-                        minCropBoxHeight: 500
+                        minCropBoxWidth: 500, // Tamaño mínimo de recorte
+                        minCropBoxHeight: 500,
+                        zoomable: true,
                     });
 
-                    // Habilitar botón de eliminar fondo
+                    // Habilitar el botón de "Eliminar Fondo"
                     removeBgButton.disabled = false;
                 };
             };
             reader.readAsDataURL(event.target.files[0]);
         });
 
-        // Eliminar fondo
+        // Eliminar fondo (simplificado)
         removeBgButton.addEventListener("click", function() {
-            // Obtener los datos del recorte
+            // Obtener el canvas recortado
             const canvasData = cropper.getCroppedCanvas();
             const imgData = canvasData.toDataURL("image/png");
 
-            // Cargar la imagen recortada en el canvas
+            // Cargar la imagen recortada en el canvas principal
+            const img = new Image();
+            img.src = imgData;
+
             img.onload = function() {
-                // Ajustamos el tamaño del canvas al recorte
+                // Ajustar el canvas al tamaño de la imagen
                 canvas.width = img.width;
                 canvas.height = img.height;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(img, 0, 0);
-
-                // Ahora puedes aplicar el código de eliminar fondo aquí si lo deseas
-
             };
-            img.src = imgData;
         });
     </script>
 </body>
