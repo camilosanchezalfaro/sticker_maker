@@ -4,15 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sticker Maker</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        h1 {
+            color: #4CAF50;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        input[type="file"] {
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+
+        canvas {
+            max-width: 100%;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
 </head>
 <body>
     <h1>Sticker Maker</h1>
-    <input type="file" id="image-upload" accept="image/*">
-    <canvas id="canvas"></canvas>
-    <button id="remove-bg">Eliminar Fondo</button>
+    <div class="container">
+        <input type="file" id="image-upload" accept="image/*">
+        <canvas id="canvas"></canvas>
+        <button id="remove-bg" disabled>Eliminar Fondo</button>
+        <div class="footer">¡Sube tu imagen y empieza a crear stickers para WhatsApp!</div>
+    </div>
+
     <script>
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
+        const removeBgButton = document.getElementById("remove-bg");
         let img = new Image();
 
         // Cargar imagen redimensionada
@@ -20,7 +95,7 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 img.onload = function() {
-                    // Redimensionamos la imagen proporcionalmente a un máximo de 300px de ancho (o el tamaño proporcional adecuado)
+                    // Redimensionamos la imagen proporcionalmente a un máximo de 300px de ancho
                     const maxWidth = 300;
                     const ratio = Math.min(maxWidth / img.width, 1);
                     const newWidth = img.width * ratio;
@@ -32,6 +107,9 @@
 
                     // Dibujamos la imagen redimensionada en el canvas
                     ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+                    // Habilitamos el botón de eliminar fondo
+                    removeBgButton.disabled = false;
                 };
                 img.src = e.target.result;
             };
@@ -39,7 +117,7 @@
         });
 
         // Eliminar fondo
-        document.getElementById("remove-bg").addEventListener("click", function() {
+        removeBgButton.addEventListener("click", function() {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
 
