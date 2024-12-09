@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sticker Maker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -73,93 +74,85 @@
             font-size: 14px;
             color: #888;
         }
+
+        .cropper-container {
+            margin-bottom: 20px;
+        }
+
+        #remove-bg {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <h1>Sticker Maker</h1>
     <div class="container">
         <input type="file" id="image-upload" accept="image/*">
-        <canvas id="canvas"></canvas>
+        <div class="cropper-container">
+            <img id="image" style="max-width: 100%; display: none;" />
+        </div>
         <button id="remove-bg" disabled>Eliminar Fondo</button>
+        <canvas id="canvas"></canvas>
         <div class="footer">¡Sube tu imagen y empieza a crear stickers para WhatsApp!</div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script>
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
         const removeBgButton = document.getElementById("remove-bg");
+        let cropper;
         let img = new Image();
 
-        // Cargar imagen redimensionada
+        // Cargar imagen redimensionada y aplicar Cropper.js
         document.getElementById("image-upload").addEventListener("change", function(event) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 img.onload = function() {
-                    // Redimensionamos la imagen proporcionalmente a un máximo de 300px de ancho
-                    const maxWidth = 300;
-                    const ratio = Math.min(maxWidth / img.width, 1);
-                    const newWidth = img.width * ratio;
-                    const newHeight = img.height * ratio;
+                    // Mostrar la imagen para recortarla
+                    const imageElement = document.getElementById("image");
+                    imageElement.src = e.target.result;
+                    imageElement.style.display = 'block';
 
-                    // Ajustamos el tamaño del canvas al nuevo tamaño de la imagen
-                    canvas.width = newWidth;
-                    canvas.height = newHeight;
+                    // Iniciar Cropper.js
+                    if (cropper) {
+                        cropper.destroy(); // Destruir el cropper anterior si existiera
+                    }
 
-                    // Dibujamos la imagen redimensionada en el canvas
-                    ctx.drawImage(img, 0, 0, newWidth, newHeight);
+                    cropper = new Cropper(imageElement, {
+                        aspectRatio: 1, // Aspecto cuadrado
+                        viewMode: 1,
+                        autoCropArea: 1,
+                        responsive: true,
+                        minCropBoxWidth: 500, // Asegurar que el recorte sea de 500x500
+                        minCropBoxHeight: 500
+                    });
 
-                    // Habilitamos el botón de eliminar fondo
+                    // Habilitar botón de eliminar fondo
                     removeBgButton.disabled = false;
                 };
-                img.src = e.target.result;
             };
             reader.readAsDataURL(event.target.files[0]);
         });
 
         // Eliminar fondo
         removeBgButton.addEventListener("click", function() {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
+            // Obtener los datos del recorte
+            const canvasData = cropper.getCroppedCanvas();
+            const imgData = canvasData.toDataURL("image/png");
 
-            // Función para detectar el color promedio de la imagen
-            function getAverageColor(imageData) {
-                let r = 0, g = 0, b = 0, count = 0;
+            // Cargar la imagen recortada en el canvas
+            img.onload = function() {
+                // Ajustamos el tamaño del canvas al recorte
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
 
-                // Analizar los primeros píxeles (puedes agregar más píxeles si es necesario)
-                for (let i = 0; i < 1000; i += 4) {
-                    r += imageData[i];
-                    g += imageData[i + 1];
-                    b += imageData[i + 2];
-                    count++;
-                }
+                // Ahora puedes aplicar el código de eliminar fondo aquí si lo deseas
 
-                r = r / count;
-                g = g / count;
-                b = b / count;
-
-                return { r, g, b };
-            }
-
-            // Obtener el color promedio
-            const avgColor = getAverageColor(data);
-
-            // Tolerancia para la detección de fondo (ajústala según sea necesario)
-            const tolerance = 50;
-
-            // Eliminar fondo basado en la diferencia de colores
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
-
-                // Si el píxel es similar al color promedio del fondo, hacerlo transparente
-                if (Math.abs(r - avgColor.r) < tolerance && Math.abs(g - avgColor.g) < tolerance && Math.abs(b - avgColor.b) < tolerance) {
-                    data[i + 3] = 0; // Hacer el píxel transparente
-                }
-            }
-
-            // Actualizar el canvas con la nueva imagen
-            ctx.putImageData(imageData, 0, 0);
+            };
+            img.src = imgData;
         });
     </script>
 </body>
