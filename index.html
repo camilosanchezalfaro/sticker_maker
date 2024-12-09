@@ -132,7 +132,7 @@
             reader.readAsDataURL(event.target.files[0]);
         });
 
-        // Eliminar fondo (simplificado)
+        // Eliminar fondo básico
         removeBgButton.addEventListener("click", function() {
             // Obtener el canvas recortado
             const canvasData = cropper.getCroppedCanvas();
@@ -148,6 +148,43 @@
                 canvas.height = img.height;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(img, 0, 0);
+
+                // Obtener los datos de la imagen
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+
+                // Función para detectar el color de fondo y hacerlo transparente
+                function removeBackground(data) {
+                    let r = 0, g = 0, b = 0, count = 0;
+
+                    // Analizar los píxeles para encontrar un color promedio
+                    for (let i = 0; i < 1000; i += 4) {
+                        r += data[i];
+                        g += data[i + 1];
+                        b += data[i + 2];
+                        count++;
+                    }
+
+                    r = r / count;
+                    g = g / count;
+                    b = b / count;
+
+                    const tolerance = 50;
+
+                    // Hacer transparente los píxeles similares al color promedio
+                    for (let i = 0; i < data.length; i += 4) {
+                        if (Math.abs(data[i] - r) < tolerance && 
+                            Math.abs(data[i + 1] - g) < tolerance && 
+                            Math.abs(data[i + 2] - b) < tolerance) {
+                            data[i + 3] = 0; // Hacerlo transparente
+                        }
+                    }
+
+                    ctx.putImageData(imageData, 0, 0);
+                }
+
+                // Llamar la función de eliminación de fondo
+                removeBackground(data);
             };
         });
     </script>
