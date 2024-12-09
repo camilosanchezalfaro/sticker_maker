@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sticker Maker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,8 +15,25 @@
             border: 1px solid #000;
             margin-bottom: 20px;
         }
-        input[type="file"] {
+        img {
+            max-width: 100%;
+        }
+        #upload-container {
             margin-bottom: 20px;
+        }
+        #crop-container {
+            display: none;
+        }
+        #apply-crop {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #apply-crop:hover {
+            background-color: #0056b3;
         }
         #remove-bg {
             background-color: #4CAF50;
@@ -24,6 +42,7 @@
             border: none;
             cursor: pointer;
             font-size: 16px;
+            margin-top: 10px;
         }
         #remove-bg:hover {
             background-color: #45a049;
@@ -35,59 +54,89 @@
     <h1>Sticker Maker</h1>
 
     <!-- Input para seleccionar la imagen -->
-    <input type="file" id="upload-image" accept="image/*">
-    <br><br>
+    <div id="upload-container">
+        <input type="file" id="upload-image" accept="image/*">
+    </div>
+
+    <!-- Contenedor para recortar -->
+    <div id="crop-container">
+        <img id="image-to-crop" alt="Imagen a recortar">
+        <br>
+        <button id="apply-crop">Aplicar Recorte</button>
+    </div>
 
     <!-- Canvas donde se dibujará la imagen -->
-    <canvas id="canvas" width="300" height="300"></canvas>
+    <canvas id="canvas" width="500" height="500"></canvas>
     <br>
 
     <!-- Botón para eliminar el fondo -->
     <button id="remove-bg">Eliminar Fondo</button>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script>
-        // Seleccionar el elemento canvas
+        const uploadImage = document.getElementById('upload-image');
+        const cropContainer = document.getElementById('crop-container');
+        const imageToCrop = document.getElementById('image-to-crop');
+        const applyCrop = document.getElementById('apply-crop');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const uploadImage = document.getElementById('upload-image');
+        let cropper;
 
-        // Función para cargar la imagen en el canvas
+        // Cargar la imagen seleccionada
         uploadImage.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const img = new Image();
-                    img.onload = function() {
-                        // Limpiar el canvas antes de dibujar la nueva imagen
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        // Dibujar la imagen en el canvas
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    imageToCrop.src = e.target.result;
+                    cropContainer.style.display = 'block';
+
+                    // Iniciar Cropper.js
+                    if (cropper) {
+                        cropper.destroy();
                     }
-                    img.src = e.target.result;
+                    cropper = new Cropper(imageToCrop, {
+                        aspectRatio: 1, // Mantener proporción 1:1
+                        viewMode: 1,
+                        autoCropArea: 1
+                    });
                 };
                 reader.readAsDataURL(file);
             }
         });
 
-        // Función para eliminar el fondo de la imagen
+        // Aplicar el recorte
+        applyCrop.addEventListener('click', () => {
+            const croppedCanvas = cropper.getCroppedCanvas({
+                width: 500, // Tamaño máximo para el canvas
+                height: 500
+            });
+
+            // Limpiar el canvas principal
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Dibujar la imagen recortada en el canvas
+            ctx.drawImage(croppedCanvas, 0, 0, canvas.width, canvas.height);
+
+            // Ocultar el contenedor de recorte
+            cropContainer.style.display = 'none';
+        });
+
+        // Eliminar el fondo de la imagen
         document.getElementById("remove-bg").addEventListener("click", function() {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
 
-            // Recorrer cada píxel de la imagen
             for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];       // Rojo
-                const g = data[i + 1];   // Verde
-                const b = data[i + 2];   // Azul
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
 
-                // Si el píxel es cercano al color blanco (ajustar estos valores si es necesario)
+                // Si el color es cercano al blanco, hacerlo transparente
                 if (r > 200 && g > 200 && b > 200) {
-                    data[i + 3] = 0;  // Hacer el píxel transparente (alpha = 0)
+                    data[i + 3] = 0;
                 }
             }
 
-            // Aplicar los cambios al canvas
             ctx.putImageData(imageData, 0, 0);
         });
     </script>
