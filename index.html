@@ -11,22 +11,27 @@
     <canvas id="canvas"></canvas>
     <button id="remove-bg">Eliminar Fondo</button>
     <script>
-        // Obtener el canvas y el contexto
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
+        let img = new Image();
 
-        // Cargar imagen y mostrarla en el canvas
+        // Cargar imagen redimensionada
         document.getElementById("image-upload").addEventListener("change", function(event) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                const img = new Image();
                 img.onload = function() {
-                    // Ajustamos el tamaño del canvas al tamaño de la imagen
-                    canvas.width = img.width;
-                    canvas.height = img.height;
+                    // Redimensionamos la imagen proporcionalmente a un máximo de 300px de ancho (o el tamaño proporcional adecuado)
+                    const maxWidth = 300;
+                    const ratio = Math.min(maxWidth / img.width, 1);
+                    const newWidth = img.width * ratio;
+                    const newHeight = img.height * ratio;
 
-                    // Dibujamos la imagen en el canvas
-                    ctx.drawImage(img, 0, 0);
+                    // Ajustamos el tamaño del canvas al nuevo tamaño de la imagen
+                    canvas.width = newWidth;
+                    canvas.height = newHeight;
+
+                    // Dibujamos la imagen redimensionada en el canvas
+                    ctx.drawImage(img, 0, 0, newWidth, newHeight);
                 };
                 img.src = e.target.result;
             };
