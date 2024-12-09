@@ -17,6 +17,9 @@
         }
         img {
             max-width: 100%;
+            max-height: 500px; /* Limitar el tamaño máximo de la imagen */
+            width: auto;
+            height: auto;
         }
         #upload-container {
             margin-bottom: 20px;
@@ -82,7 +85,7 @@
         const ctx = canvas.getContext('2d');
         let cropper;
 
-        // Cargar la imagen seleccionada
+        // Función para cargar la imagen seleccionada
         uploadImage.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
@@ -91,15 +94,36 @@
                     imageToCrop.src = e.target.result;
                     cropContainer.style.display = 'block';
 
-                    // Iniciar Cropper.js
-                    if (cropper) {
-                        cropper.destroy();
-                    }
-                    cropper = new Cropper(imageToCrop, {
-                        aspectRatio: 1, // Mantener proporción 1:1
-                        viewMode: 1,
-                        autoCropArea: 1
-                    });
+                    // Esperar a que la imagen esté cargada
+                    imageToCrop.onload = function() {
+                        // Calcular el tamaño proporcional de la imagen
+                        const maxWidth = 300;
+                        const maxHeight = 533;
+                        let width = imageToCrop.naturalWidth;
+                        let height = imageToCrop.naturalHeight;
+
+                        // Mantener proporción de la imagen
+                        if (width > maxWidth || height > maxHeight) {
+                            const ratio = Math.min(maxWidth / width, maxHeight / height);
+                            width = width * ratio;
+                            height = height * ratio;
+                        }
+
+                        imageToCrop.width = width;
+                        imageToCrop.height = height;
+
+                        // Iniciar Cropper.js
+                        if (cropper) {
+                            cropper.destroy();
+                        }
+                        cropper = new Cropper(imageToCrop, {
+                            aspectRatio: 1, // Mantener proporción 1:1
+                            viewMode: 1,
+                            autoCropArea: 1,
+                            minContainerWidth: 300, // Limitar el tamaño mínimo de la imagen
+                            minContainerHeight: 533, // Limitar el tamaño mínimo de la imagen
+                        });
+                    };
                 };
                 reader.readAsDataURL(file);
             }
