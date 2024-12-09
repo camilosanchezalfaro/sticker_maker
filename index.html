@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sticker Maker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background-color: #f2f2f2;
+    }
+    .upload-container {
+      margin: 20px auto;
+      padding: 20px;
+      border: 2px dashed #007BFF;
+      border-radius: 10px;
+      width: 300px;
+      background-color: white;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    label {
+      cursor: pointer;
+      color: #007BFF;
+      text-decoration: underline;
+    }
+    #preview {
+      margin-top: 20px;
+      max-width: 100%;
+      max-height: 300px;
+      overflow: hidden;
+    }
+    #crop-btn {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    #crop-btn:hover {
+      background-color: #218838;
+    }
+    #result-container {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    canvas {
+      max-width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sticker Maker</h1>
+  <div class="upload-container">
+    <p>Sube tu imagen para crear un sticker</p>
+    <input type="file" id="upload" accept="image/*">
+    <label for="upload">Seleccionar archivo</label>
+    <div id="preview"></div>
+    <button id="crop-btn">Recortar Imagen</button>
+  </div>
+  <div id="result-container">
+    <p>Tu sticker:</p>
+    <div id="result"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script>
+    const uploadInput = document.getElementById('upload');
+    const previewContainer = document.getElementById('preview');
+    const cropBtn = document.getElementById('crop-btn');
+    const resultContainer = document.getElementById('result');
+    let cropper;
+
+    uploadInput.addEventListener('change', function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.id = 'image-to-crop';
+          previewContainer.innerHTML = ''; // Limpiar vista previa
+          previewContainer.appendChild(img);
+
+          // Asegurarnos de destruir cualquier instancia previa de Cropper
+          if (cropper) cropper.destroy();
+
+          // Inicializar Cropper
+          cropper = new Cropper(img, {
+            aspectRatio: 1,
+            viewMode: 1,
+          });
+
+          cropBtn.style.display = 'block'; // Mostrar botón de recorte
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    cropBtn.addEventListener('click', function () {
+      if (cropper) {
+        const canvas = cropper.getCroppedCanvas({
+          width: 512,
+          height: 512,
+        });
+        resultContainer.innerHTML = ''; // Limpiar resultado previo
+        resultContainer.appendChild(canvas); // Mostrar resultado
+      }
+    });
+  </script>
+</body>
+</html>
+
+    
+
+
