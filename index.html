@@ -91,6 +91,7 @@
         </div>
         <button id="remove-bg" disabled>Eliminar Fondo</button>
         <canvas id="canvas"></canvas>
+        <button id="download-btn" disabled>Descargar Sticker</button>
         <div class="footer">¡Sube tu imagen y empieza a crear stickers para WhatsApp!</div>
     </div>
 
@@ -98,6 +99,7 @@
     <script>
         let cropper;
         const removeBgButton = document.getElementById("remove-bg");
+        const downloadBtn = document.getElementById("download-btn");
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
         const imgElement = document.getElementById("image");
@@ -185,7 +187,22 @@
 
                 // Llamar la función de eliminación de fondo
                 removeBackground(data);
+
+                // Habilitar el botón de descarga
+                downloadBtn.disabled = false;
             };
+        });
+
+        // Descargar la imagen en formato .webp
+        downloadBtn.addEventListener("click", function() {
+            // Convertir el canvas a formato webp
+            const webpData = canvas.toDataURL("image/webp");
+
+            // Crear un enlace para descargar la imagen
+            const link = document.createElement("a");
+            link.href = webpData;
+            link.download = "sticker.webp";
+            link.click();
         });
     </script>
 </body>
