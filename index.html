@@ -4,129 +4,74 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sticker Maker</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      padding: 20px;
-      background-color: #f2f2f2;
-    }
-    .upload-container {
-      margin: 20px auto;
-      padding: 20px;
-      border: 2px dashed #007BFF;
-      border-radius: 10px;
-      width: 300px;
-      background-color: white;
-    }
-    input[type="file"] {
-      display: none;
-    }
-    label {
-      cursor: pointer;
-      color: #007BFF;
-      text-decoration: underline;
-    }
-    #preview {
-      margin-top: 20px;
-      max-width: 100%;
-      max-height: 300px;
-      overflow: hidden;
-    }
-    #crop-btn {
-      display: none;
-      margin-top: 10px;
-      padding: 10px 20px;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    #crop-btn:hover {
-      background-color: #218838;
-    }
-    #result-container {
-      margin-top: 20px;
-      padding: 10px;
-      background-color: white;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      width: 300px;
-      margin-left: auto;
-      margin-right: auto;
+      margin: 20px;
     }
     canvas {
-      max-width: 100%;
+      margin-top: 20px;
       border: 1px solid #ccc;
-      border-radius: 10px;
+    }
+    #upload {
+      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
   <h1>Sticker Maker</h1>
-  <div class="upload-container">
-    <p>Sube tu imagen para crear un sticker</p>
-    <input type="file" id="upload" accept="image/*">
-    <label for="upload">Seleccionar archivo</label>
-    <div id="preview"></div>
-    <button id="crop-btn">Recortar Imagen</button>
-  </div>
-  <div id="result-container">
-    <p>Tu sticker:</p>
-    <div id="result"></div>
-  </div>
+  <p>Sube una imagen, elimina el fondo y crea tu sticker.</p>
+  <input type="file" id="upload" accept="image/*" />
+  <button id="remove-bg">Eliminar Fondo</button>
+  <canvas id="canvas"></canvas>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script>
-    const uploadInput = document.getElementById('upload');
-    const previewContainer = document.getElementById('preview');
-    const cropBtn = document.getElementById('crop-btn');
-    const resultContainer = document.getElementById('result');
-    let cropper;
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const uploadInput = document.getElementById("upload");
+    const removeBgButton = document.getElementById("remove-bg");
 
-    uploadInput.addEventListener('change', function () {
-      const file = this.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          const img = document.createElement('img');
-          img.src = e.target.result;
-          img.id = 'image-to-crop';
-          previewContainer.innerHTML = ''; // Limpiar vista previa
-          previewContainer.appendChild(img);
+    let img = new Image();
 
-          // Asegurarnos de destruir cualquier instancia previa de Cropper
-          if (cropper) cropper.destroy();
-
-          // Inicializar Cropper
-          cropper = new Cropper(img, {
-            aspectRatio: 1,
-            viewMode: 1,
-          });
-
-          cropBtn.style.display = 'block'; // Mostrar botón de recorte
+    // Cargar la imagen en el canvas
+    uploadInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        img.src = reader.result;
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
         };
-        reader.readAsDataURL(file);
-      }
+      };
+      reader.readAsDataURL(file);
     });
 
-    cropBtn.addEventListener('click', function () {
-      if (cropper) {
-        const canvas = cropper.getCroppedCanvas({
-          width: 512,
-          height: 512,
-        });
-        resultContainer.innerHTML = ''; // Limpiar resultado previo
-        resultContainer.appendChild(canvas); // Mostrar resultado
+    // Eliminar el fondo de la imagen
+    removeBgButton.addEventListener("click", async () => {
+      if (!img.src) {
+        alert("Por favor, sube una imagen primero.");
+        return;
       }
+
+      const net = await bodyPix.load(); // Cargar modelo Body-Pix
+      const segmentation = await net.segmentPerson(canvas, {
+        internalResolution: "medium",
+        segmentationThreshold: 0.7,
+      });
+
+      const maskBackground = bodyPix.toMask(
+        segmentation,
+        { r: 0, g: 0, b: 0, a: 0 }, // Fondo transparente
+        { r: 255, g: 255, b: 255, a: 255 } // Persona visible
+      );
+      
+      bodyPix.drawMask(canvas, img, maskBackground, 1, 0, false);
     });
   </script>
 </body>
 </html>
-
-    
-
-
