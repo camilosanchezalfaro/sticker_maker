@@ -44,10 +44,6 @@
     button:hover {
       background-color: #0056b3;
     }
-
-    input[type="range"] {
-      width: 200px;
-    }
   </style>
 </head>
 <body>
@@ -56,8 +52,6 @@
   <canvas id="canvas"></canvas>
   <div id="controls">
     <button id="remove-bg">Eliminar Fondo</button>
-    <input type="range" id="tolerance" min="10" max="100" value="50">
-    <label for="tolerance">Tolerancia</label>
     <button id="download">Descargar</button>
   </div>
   <script>
@@ -65,7 +59,6 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const removeBgButton = document.getElementById('remove-bg');
-    const toleranceSlider = document.getElementById('tolerance');
     const downloadButton = document.getElementById('download');
 
     let img = new Image();
@@ -89,15 +82,14 @@
       };
     });
 
-    // Remove background based on tolerance
+    // Remove background based on fixed tolerance
     removeBgButton.addEventListener('click', () => {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
 
-      // Calculate average color
-      const avgColor = { r: 255, g: 255, b: 255 }; // Assume white background
-
-      const tolerance = parseInt(toleranceSlider.value, 10);
+      // Calculate average color (white background assumption)
+      const avgColor = { r: 255, g: 255, b: 255 };
+      const tolerance = 50; // Fixed tolerance
 
       for (let i = 0; i < data.length; i += 4) {
         const r = data[i];
