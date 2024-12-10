@@ -23,8 +23,15 @@
     }
 
     #image-container {
-      max-width: 90%;
+      max-width: 500px; /* Ajustar el contenedor a un tamaño fijo */
+      max-height: 500px;
+      overflow: hidden; /* Evitar que se desborde */
       margin: 20px 0;
+    }
+
+    img {
+      max-width: 100%;
+      max-height: 100%;
     }
 
     #controls {
@@ -51,7 +58,8 @@
       border: 1px solid #ccc;
       display: block;
       margin: 20px auto;
-      max-width: 90%;
+      max-width: 500px; /* Ajustar al tamaño deseado */
+      max-height: 500px;
     }
   </style>
 </head>
@@ -59,7 +67,7 @@
   <h1>Sticker Maker</h1>
   <input type="file" id="upload" accept="image/*">
   <div id="image-container">
-    <img id="image" style="max-width: 100%; display: none;">
+    <img id="image" style="display: none;">
   </div>
   <div id="controls">
     <button id="crop">Recortar</button>
@@ -91,17 +99,17 @@
         // Destruir el cropper anterior si existe
         if (cropper) cropper.destroy();
 
-        // Inicializar Cropper.js con un tamaño ajustado
+        // Inicializar Cropper.js con un tamaño fijo
         cropper = new Cropper(image, {
           aspectRatio: 1,
           viewMode: 1,
+          autoCropArea: 1,
           minContainerWidth: 300,
           minContainerHeight: 300,
           ready: function () {
             const containerData = cropper.getContainerData();
-            const cropBoxData = cropper.getCropBoxData();
 
-            // Ajustar la caja de recorte al centro con 500x500
+            // Centrar la caja de recorte con 500x500
             cropper.setCropBoxData({
               left: (containerData.width - 500) / 2,
               top: (containerData.height - 500) / 2,
